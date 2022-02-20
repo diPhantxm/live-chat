@@ -1,10 +1,10 @@
 .PHONY: build
 
 build:
-	go build -v -o ./.bin/hospital-rest-api/ ./cmd/hospital-rest-api/
+	go build -v -o ./.bin/app/ ./cmd/app/
 
 run:
 	make build
-	go run -v ./cmd/hospital-rest-api/
+	go run -v ./cmd/app/
 
 DEFAULT_GOAL: run
