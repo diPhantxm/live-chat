@@ -5,6 +5,6 @@ build:
 
 run:
 	make build
-	go run -v ./cmd/app/
+	./.bin/app/app
 
 DEFAULT_GOAL: run

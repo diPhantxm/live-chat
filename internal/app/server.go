@@ -2,6 +2,8 @@ package app
 
 import (
 	"bufio"
+	"fmt"
+	"io"
 	"log"
 	"net"
 )
@@ -9,13 +11,14 @@ import (
 type Server struct {
 	conn     net.Conn
 	listener net.Listener
-	clients  []net.Addr
+	clients  map[net.Addr]net.Conn
 }
 
 func NewServer() *Server {
 	return &Server{
 		conn:     nil,
 		listener: nil,
+		clients:  map[net.Addr]net.Conn{},
 	}
 }
 
@@ -36,20 +39,34 @@ func (s *Server) Start() {
 			log.Fatalf("Error occurred when accepting message: %s", err.Error())
 		}
 
-		s.clients = append(s.clients, s.conn.RemoteAddr())
+		s.clients[incConn.RemoteAddr()] = incConn
+		s.SendToOther(incConn, fmt.Sprintf("New client connected. Address: %s\r\n", incConn.RemoteAddr().String()))
 		go s.broadcast(incConn)
 	}
 }
 
-func (s *Server) broadcast(incConn net.Conn) {
-	msg, err := bufio.NewReader(s.conn).ReadString('\n')
-	if err != nil {
-		log.Fatalf("Could not read message: %s", err.Error())
-	}
+func (s *Server) broadcast(conn net.Conn) {
+	for {
+		msg, err := bufio.NewReader(conn).ReadString('\n')
 
+		if err == io.EOF {
+			delete(s.clients, conn.RemoteAddr())
+			s.SendToOther(conn, fmt.Sprintf("Client disconnected. Address: %s\r\n", conn.RemoteAddr().String()))
+			return
+		}
+
+		if err != nil {
+			log.Fatalf("Could not read message: %s\r\n", err.Error())
+		}
+
+		s.SendToOther(conn, msg)
+	}
+}
+
+func (s *Server) SendToOther(current net.Conn, msg string) {
 	for _, client := range s.clients {
-		if client != incConn.RemoteAddr() {
-			incConn.Write([]byte(msg))
+		if client.RemoteAddr() != current.RemoteAddr() {
+			client.Write([]byte(msg))
 		}
 	}
 }
