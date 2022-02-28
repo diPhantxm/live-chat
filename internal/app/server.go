@@ -12,19 +12,21 @@ type Server struct {
 	conn     net.Conn
 	listener net.Listener
 	clients  map[net.Addr]net.Conn
+	config   *Config
 }
 
-func NewServer() *Server {
+func NewServer(config *Config) *Server {
 	return &Server{
 		conn:     nil,
 		listener: nil,
 		clients:  map[net.Addr]net.Conn{},
+		config:   config,
 	}
 }
 
 func (s *Server) Start() {
 	var err error
-	s.listener, err = net.Listen("tcp", ":8080")
+	s.listener, err = net.Listen(s.config.Protocol, fmt.Sprintf("%s:%d", s.config.Address, s.config.Port))
 
 	if err != nil {
 		log.Fatalf("Error occured when starting listening: %s", err.Error())
