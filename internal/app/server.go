@@ -61,7 +61,7 @@ func (s *Server) broadcast(conn net.Conn) {
 			log.Fatalf("Could not read message: %s\r\n", err.Error())
 		}
 
-		s.SendToOther(conn, msg)
+		s.SendToOther(conn, fmt.Sprintf("[%s]: %s", conn.RemoteAddr(), msg))
 	}
 }
 
